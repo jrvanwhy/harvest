@@ -524,6 +524,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "harvest_fs"
+version = "0.1.0"
+dependencies = [
+ "tempfile",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
 name = "harvest_translate"
 version = "0.1.0"
 dependencies = [
