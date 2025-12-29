@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-full_source = { version = "0.1.0", path = "../full_source" }
+full_source.workspace = true
 harvest_core.workspace = true
 tracing = "0.1.44"
 

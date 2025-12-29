@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-full_source = { version = "0.1.0", path = "../full_source" }
+full_source.workspace = true
 harvest_core.workspace = true
-identify_project_kind = { version = "0.1.0", path = "../identify_project_kind" }
+identify_project_kind.workspace = true
 llm = { default-features = false, features = ["ollama", "openai", "openrouter", "rustls-tls" ], version = "1.3.4" }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true

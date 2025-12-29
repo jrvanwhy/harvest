@@ -8,7 +8,7 @@ pub mod util;
 
 use harvest_core::config::Config;
 use harvest_core::edit::{self, NewEditError};
-use harvest_core::tools::MightWriteOutcome;
+use harvest_core::tools::{MightWriteContext, MightWriteOutcome};
 use harvest_core::{HarvestIR, diagnostics};
 use identify_project_kind::IdentifyProjectKind;
 use load_raw_source::LoadRawSource;
@@ -34,7 +34,7 @@ pub fn transpile(config: Arc<Config>) -> Result<Arc<HarvestIR>, Box<dyn std::err
         scheduler.next_invocations(|mut tool| {
             use NextInvocationOutcome::{DontTryAgain, Error, TryLater};
             let name = tool.name();
-            let might_write = match tool.might_write(snapshot.as_ref().into()) {
+            let might_write = match tool.might_write(MightWriteContext::new(&snapshot)) {
                 MightWriteOutcome::NotRunnable => {
                     debug!("Tool {name} is not runnable");
                     return DontTryAgain;

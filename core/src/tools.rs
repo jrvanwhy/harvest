@@ -1,7 +1,6 @@
 //! Individual tools (and their interfaces) used by HARVEST to translate C to Rust.
 
 use crate::config::Config;
-//use crate::{cli::unknown_field_warning, diagnostics::ToolReporter};
 use crate::diagnostics::ToolReporter;
 use crate::{Edit, HarvestIR, Id};
 use std::collections::HashSet;
@@ -46,9 +45,9 @@ pub struct MightWriteContext<'a> {
     pub ir: &'a HarvestIR,
 }
 
-impl<'a> From<&'a HarvestIR> for MightWriteContext<'a> {
-    fn from(value: &'a HarvestIR) -> Self {
-        MightWriteContext { ir: value }
+impl<'a> MightWriteContext<'a> {
+    pub fn new<H: AsRef<HarvestIR> + 'a>(value: &'a H) -> Self {
+        MightWriteContext { ir: value.as_ref() }
     }
 }
 
