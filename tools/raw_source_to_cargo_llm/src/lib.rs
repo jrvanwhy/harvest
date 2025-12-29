@@ -1,20 +1,20 @@
 //! Attempts to directly turn a C project into a Cargo project by throwing it at
 //! an LLM via the `llm` crate.
 
-use crate::cli::unknown_field_warning;
-use crate::load_raw_source::RawSource;
-use crate::tools::{MightWriteContext, MightWriteOutcome, RunContext, Tool};
-use harvest_core::{Representation, fs::RawDir};
+use full_source::{CargoPackage, RawSource};
+use harvest_core::config::unknown_field_warning;
+use harvest_core::fs::RawDir;
+use harvest_core::tools::{MightWriteContext, MightWriteOutcome, RunContext, Tool};
 use llm::builder::{LLMBackend, LLMBuilder};
 use llm::chat::{ChatMessage, StructuredOutputFormat};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::str::FromStr;
 use tracing::{debug, info, trace};
 
-use super::identify_project_kind::ProjectKind;
+use identify_project_kind::ProjectKind;
 
 /// Structured output JSON schema for Ollama.
 const STRUCTURED_OUTPUT_SCHEMA: &str = include_str!("structured_schema.json");
@@ -41,7 +41,8 @@ impl Tool for RawSourceToCargoLlm {
     }
 
     fn run(self: Box<Self>, context: RunContext) -> Result<(), Box<dyn std::error::Error>> {
-        let config = &context.config.tools.raw_source_to_cargo_llm;
+        let config =
+            Config::deserialize(context.config.tools.get("raw_source_to_cargo_llm").unwrap())?;
         debug!("LLM Configuration {config:?}");
         let in_dir = &context
             .ir_snapshot
@@ -150,28 +151,6 @@ impl Tool for RawSourceToCargoLlm {
             .ir_edit
             .add_representation(Box::new(CargoPackage { dir: out_dir }));
         Ok(())
-    }
-}
-
-/// A cargo project representation (Cargo.toml, src/, etc).
-pub struct CargoPackage {
-    pub dir: RawDir,
-}
-
-impl std::fmt::Display for CargoPackage {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        writeln!(f, "Cargo package:")?;
-        self.dir.display(0, f)
-    }
-}
-
-impl Representation for CargoPackage {
-    fn name(&self) -> &'static str {
-        "CargoPackage"
-    }
-
-    fn materialize(&self, path: &Path) -> std::io::Result<()> {
-        self.dir.materialize(path)
     }
 }
 

@@ -34,7 +34,7 @@ impl Organizer {
         let ir = Arc::make_mut(&mut self.ir);
         for (&id, ref mut representation) in &mut edit.writable {
             if let Some(representation) = representation.take() {
-                ir.representations.insert(id, representation.into());
+                ir.insert(id, representation);
             }
         }
         Ok(())
@@ -166,7 +166,7 @@ struct Shared {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tests::EmptyRepresentation;
+    use crate::ir::tests::EmptyRepresentation;
 
     #[test]
     fn organizer() {
@@ -184,7 +184,7 @@ mod tests {
         assert_eq!(organizer.apply_edit(edit), Ok(()));
         // a and b should be applied but c should not.
         assert_eq!(
-            HashSet::from_iter(organizer.snapshot().representations.keys()),
+            HashSet::from_iter(organizer.snapshot().ids()),
             HashSet::from([&a, &b]),
             "apply_edit set incorrect representations"
         );

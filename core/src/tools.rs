@@ -1,40 +1,10 @@
 //! Individual tools (and their interfaces) used by HARVEST to translate C to Rust.
 
-pub mod identify_project_kind;
-pub mod load_raw_source;
-pub mod raw_source_to_cargo_llm;
-pub mod try_cargo_build;
-
-use crate::{cli::unknown_field_warning, diagnostics::ToolReporter};
-use harvest_ir::{Edit, HarvestIR, Id};
-use serde::Deserialize;
-use serde_json::Value;
-use std::collections::{HashMap, HashSet};
+use crate::config::Config;
+use crate::diagnostics::ToolReporter;
+use crate::{Edit, HarvestIR, Id};
+use std::collections::HashSet;
 use std::sync::Arc;
-
-/// Combined configuration for all Tools in this crate.
-#[derive(Debug, Deserialize)]
-pub struct ToolConfigs {
-    pub raw_source_to_cargo_llm: raw_source_to_cargo_llm::Config,
-
-    #[serde(flatten)]
-    unknown: HashMap<String, Value>,
-}
-
-impl ToolConfigs {
-    pub fn validate(&self) {
-        unknown_field_warning("tools", &self.unknown);
-        self.raw_source_to_cargo_llm.validate();
-    }
-
-    /// Returns a mock config for testing.
-    pub fn mock() -> Self {
-        Self {
-            raw_source_to_cargo_llm: raw_source_to_cargo_llm::Config::mock(),
-            unknown: HashMap::new(),
-        }
-    }
-}
 
 /// Trait implemented by each tool. Used by the scheduler to decide what tools
 /// to run and to manage those tools.
@@ -75,6 +45,12 @@ pub struct MightWriteContext<'a> {
     pub ir: &'a HarvestIR,
 }
 
+impl<'a> MightWriteContext<'a> {
+    pub fn new<H: AsRef<HarvestIR> + 'a>(value: &'a H) -> Self {
+        MightWriteContext { ir: value.as_ref() }
+    }
+}
+
 /// Result of a `Tool::might_write` execution.
 pub enum MightWriteOutcome {
     /// This tool is not and will not be runnable. Tells the scheduler to discard the tool.
@@ -94,7 +70,6 @@ pub enum MightWriteOutcome {
 /// access the IR, make IR changes, launch external processes (with
 /// diagnostics), and anything else that requires hooking into the rest of
 /// harvest_translate.
-#[non_exhaustive]
 pub struct RunContext<'a> {
     /// A set of changes to be applied to the IR when this tool completes
     /// successfully.
@@ -105,7 +80,7 @@ pub struct RunContext<'a> {
     pub ir_snapshot: Arc<HarvestIR>,
 
     /// Configuration for the current harvest_translate run.
-    pub config: Arc<crate::cli::Config>,
+    pub config: Arc<Config>,
 
     /// Handle through which to report diagnostics and create temporary directories (which live
     /// inside the diagnostics directory).
